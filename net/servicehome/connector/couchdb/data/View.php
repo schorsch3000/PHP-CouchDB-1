@@ -26,28 +26,12 @@
 
 namespace net\servicehome\connector\couchdb\data;
 
-use net\servicehome\connector\couchdb\CouchDBResponse;
-use net\servicehome\connector\couchdb\data\DocumentInterface;
-
 /**
  * Description of newPHPClass
  *
  * @author Marco Saßmannshausen <ms@servicehome.net>
  */
-class Document implements DocumentInterface {
-
-	protected $_id;
-	protected $_rev;
-	protected $data;
-
-	public function __construct(CouchDBResponse $response = null) {
-		$this->_id = null;
-		$this->_rev = null;
-		$this->data = null;
-		if (null !== $response) {
-			$this->parse($response);
-		}
-	}
+class View extends Document implements ViewInterface {
 
 	/**
 	 * Create a new document
@@ -57,45 +41,19 @@ class Document implements DocumentInterface {
 	 */
 	public static function create($document_name) {
 		$tmp = new self();
-		$tmp->setId($document_name);
+		$tmp->setId('_design/' . $document_name);
 		return $tmp;
 	}
 
-	public function parse(CouchDBResponse $response) {
-		$body_array = $response->getBody(true);
-		foreach ($body_array as $key => $value) {
-			if (in_array($key, array('_id', '_rev'))) {
-				$this->{$key} = $value;
-			} else {
-				$this->data[$key] = $value;
-			}
-		}
-	}
-
-	public function set($key, $value) {
-		$this->data[$key] = $value;
-	}
-
 	public function setId($name) {
-		$this->_id = $name;
+		$this->_id = '_design/' . $name;
 	}
 
-	public function getId() {
-		return $this->_id;
-	}
-
-	public function getRevsion() {
-		return $this->_rev;
-	}
-
-	public function resetRevision() {
-		$this->_rev = null;
-	}
-
-	public function getData() {
-		return $this->data;
-	}
-
+	/**
+	 * 
+	 * @return type
+	 * @throws \Exception
+	 */
 	public function getJson() {
 		if (null === $this->getId()) {
 			throw new \Exception("No id given!");
@@ -106,11 +64,43 @@ class Document implements DocumentInterface {
 			$data['_rev'] = $this->getRevsion();
 		}
 
-		foreach ($this->data as $key => $value) {
-			$data[$key] = $value;
+		$data['language'] = 'javascript';
+		$data['views'] = $this->data['views'];
+		if (!is_array($data['views'])) {
+			throw new Exception('No views defined!');
 		}
 
 		return json_encode($data);
 	}
 
+	public function setView($view_name, $map_reduce_ar) {
+		if (!isset($this->data['views'])) {
+			$this->data['views'] = array();
+		}
+		$views = $this->data['views'];
+
+		$views[$view_name] = $map_reduce_ar;
+
+		parent::set('views', $views);
+	}
+
 }
+
+//{
+//	"_id":"_design/company",
+//	"_rev":"12345",
+//	"language": "javascript",
+//	"views":
+//	{
+//	"all": {
+//	"map": "function(doc) { if (doc.Type == 'customer')  emit(null, doc) }"
+//	},
+//	"by_lastname": {
+//		"map": "function(doc) { if (doc.Type == 'customer')  emit(doc.LastName, doc) }"
+//		},
+//		"total_purchases": {
+//			"map": "function(doc) { if (doc.Type == 'purchase')  emit(doc.Customer, doc.Amount) }",
+//			"reduce": "function(keys, values) { return sum(values) }"
+//		}
+//	}
+//}

@@ -26,32 +26,22 @@
 
 namespace net\servicehome\connector\couchdb\command;
 
-use net\servicehome\connector\couchdb\data\DocumentInterface;
+use net\servicehome\connector\couchdb\data\ViewInterface;
 
 /**
  * Description of newPHPClass
  *
  * @author Marco Saßmannshausen <ms@servicehome.net>
  */
-class CreateDocument extends \net\servicehome\connector\couchdb\CouchDBRequest {
+class CreateView extends \net\servicehome\connector\couchdb\CouchDBRequest {
 
-	public function __construct($db_name, $document_name, $data = null) {
-		$url = '/' . $db_name . '/' . $document_name;
+	public function __construct($db_name, ViewInterface $view) {
+		$url = '/' . $db_name . '/' . $view->getId();
 		$method = 'PUT';
 
-		if (null !== $data) {
-			$data = json_encode($data);
-		}
+		$data = $view->getJson();
 
 		parent::__construct($url, $method, $data);
-	}
-
-	public static function initWithDoc($db_name, DocumentInterface $document) {
-		$data = $document->getData();
-
-		$tmp = new self($db_name, $document->getId(), $data);
-
-		return $tmp;
 	}
 
 }
