@@ -36,81 +36,87 @@ use net\servicehome\connector\couchdb\data\DocumentInterface;
  */
 class Document implements DocumentInterface {
 
-	protected $_id;
-	protected $_rev;
-	protected $data;
+    protected $_id;
+    protected $_rev;
+    protected $data;
 
-	public function __construct(CouchDBResponse $response = null) {
-		$this->_id = null;
-		$this->_rev = null;
-		$this->data = null;
-		if (null !== $response) {
-			$this->parse($response);
-		}
-	}
+    public function __construct(CouchDBResponse $response = null) {
+        $this->_id = null;
+        $this->_rev = null;
+        $this->data = null;
+        if (null !== $response) {
+            $this->parseResponse($response);
+        }
+    }
 
-	/**
-	 * Create a new document
-	 * 
-	 * @param string $document_name
-	 * @return \self
-	 */
-	public static function create($document_name) {
-		$tmp = new self();
-		$tmp->setId($document_name);
-		return $tmp;
-	}
+    /**
+     * Create a new document
+     * 
+     * @param string $document_name
+     * @return \self
+     */
+    public static function create($document_name) {
+        $tmp = new self();
+        $tmp->setId($document_name);
+        return $tmp;
+    }
 
-	public function parse(CouchDBResponse $response) {
-		$body_array = $response->getBody(true);
-		foreach ($body_array as $key => $value) {
-			if (in_array($key, array('_id', '_rev'))) {
-				$this->{$key} = $value;
-			} else {
-				$this->data[$key] = $value;
-			}
-		}
-	}
+    public function parseResponse(CouchDBResponse $response) {
+        $body_array = $response->getBody(true);
+        foreach ($body_array as $key => $value) {
+            if (in_array($key, array('_id', '_rev'))) {
+                $this->{$key} = $value;
+            } else {
+                $this->data[$key] = $value;
+            }
+        }
+    }
 
-	public function set($key, $value) {
-		$this->data[$key] = $value;
-	}
+    public function parseData($doc_id, $doc_rev, $document_data) {
+        $this->_id = $doc_id;
+        $this->_rev = $doc_rev;
+        $this->data = $document_data;
+    }
 
-	public function setId($name) {
-		$this->_id = $name;
-	}
+    public function set($key, $value) {
+        $this->data[$key] = $value;
+    }
 
-	public function getId() {
-		return $this->_id;
-	}
+    public function setId($name) {
+        $this->_id = $name;
+    }
 
-	public function getRevsion() {
-		return $this->_rev;
-	}
+    public function getId() {
+        return $this->_id;
+    }
 
-	public function resetRevision() {
-		$this->_rev = null;
-	}
+    public function getRevsion() {
+        return $this->_rev;
+    }
 
-	public function getData() {
-		return $this->data;
-	}
+    public function resetRevision() {
+        $this->_rev = null;
+    }
 
-	public function getJson() {
-		if (null === $this->getId()) {
-			throw new \Exception("No id given!");
-		}
+    public function getData() {
+        return $this->data;
+    }
 
-		$data = array('_id' => $this->getId());
-		if (null !== $this->getRevsion()) {
-			$data['_rev'] = $this->getRevsion();
-		}
+    public function getJson() {
+        if (null === $this->getId()) {
+            throw new \Exception("No id given!");
+        }
 
-		foreach ($this->data as $key => $value) {
-			$data[$key] = $value;
-		}
+        $data = array('_id' => $this->getId());
+        if (null !== $this->getRevsion()) {
+            $data['_rev'] = $this->getRevsion();
+        }
 
-		return json_encode($data);
-	}
+        foreach ($this->data as $key => $value) {
+            $data[$key] = $value;
+        }
+
+        return json_encode($data);
+    }
 
 }
