@@ -1,8 +1,7 @@
 <?php
 
-define('LOCAL_CLASS_PATH', realpath('./') . '/');
-set_include_path(get_include_path() . PATH_SEPARATOR . LOCAL_CLASS_PATH);
-spl_autoload_register();
+include 'vendor/autoload.php';
+
 
 use net\servicehome\connector\couchdb as couch;
 
